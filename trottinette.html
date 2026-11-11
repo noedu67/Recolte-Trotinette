@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Une trottinette électrique, avec votre aide</title>
+<style>
+:root{--bg:#f3f5f4;--panel:#fff;--ink:#12202b;--muted:#5a6874;--line:#d8dee2;--accent:#2447f9;--tint:#e8edff;--ok:#12805c;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#0e161e;--panel:#16212b;--ink:#eef2f5;--muted:#9fb0bc;--line:#2a3945;--accent:#6c8bff;--tint:#1d2a4d;--ok:#46c995}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;line-height:1.55;overflow-x:hidden}
+.bar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px}
+.bar-in{max-width:720px;margin:0 auto}
+.gauge{display:flex;align-items:center;gap:14px}
+.batt{flex:1;display:flex;align-items:center}
+.cells{flex:1;height:26px;border:2px solid var(--ink);border-radius:8px;padding:3px}
+.inner{height:100%;-webkit-mask:repeating-linear-gradient(90deg,#000 0,#000 calc(10% - 3px),transparent calc(10% - 3px),transparent 10%);mask:repeating-linear-gradient(90deg,#000 0,#000 calc(10% - 3px),transparent calc(10% - 3px),transparent 10%)}
+.fill{height:100%;width:0;background:var(--accent);transition:width 2s cubic-bezier(.25,.8,.25,1)}
+.cap{width:5px;height:12px;background:var(--ink);border-radius:0 3px 3px 0;margin-left:2px}
+.pct{font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums;min-width:3.4ch;text-align:right}
+.hint{margin:6px 0 0;font-size:.85rem;color:var(--muted)}
+main{max-width:720px;margin:0 auto;padding:40px 16px 56px}
+h1{font-size:clamp(2.1rem,7.5vw,3.4rem);line-height:1.08;letter-spacing:-.03em;font-weight:800;margin:0 0 16px;max-width:15ch}
+.lead{font-size:1.1rem;color:var(--muted);max-width:52ch;margin:0 0 36px}
+.stats{display:grid;grid-template-columns:1.6fr 1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:36px}
+.stat{padding:18px 0 18px 16px;border-left:1px solid var(--line)}
+.stat:first-child{padding-left:0;border-left:0}
+.stat b{display:block;font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat:first-child b{font-size:clamp(1.9rem,8vw,2.7rem);letter-spacing:-.02em;color:var(--accent);line-height:1.1}
+.stat span{font-size:.85rem;color:var(--muted)}
+.done{display:none;margin:-16px 0 32px;font-weight:700;color:var(--ok)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 20px}
+h2{font-size:1.3rem;margin:0 0 18px;letter-spacing:-.01em}
+.amounts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.amounts button{min-height:52px;border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;font:inherit;font-size:1.05rem;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.amounts button:hover{border-color:var(--accent)}
+.amounts button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.custom{display:block;font-size:.9rem;font-weight:600;color:var(--muted);margin-bottom:20px}
+.field{display:flex;align-items:center;margin-top:6px;border:1.5px solid var(--line);border-radius:10px;padding:0 14px;background:var(--bg)}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+.field input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:1.25rem;font-weight:700;padding:13px 0}
+.field input:focus{outline:none}
+.field b{color:var(--muted);font-size:1.15rem}
+.give{display:flex;align-items:center;justify-content:center;min-height:58px;width:100%;background:var(--accent);color:#fff;text-decoration:none;font-weight:800;font-size:1.1rem;border-radius:12px;transition:filter .15s,transform .15s}
+.give:hover{filter:brightness(1.08)}
+.give:active{transform:scale(.985)}
+.msg{min-height:1.5em;margin:12px 0 0;font-weight:700;color:var(--ok)}
+.note{margin:4px 0 0;font-size:.85rem;color:var(--muted)}
+.steps{margin:40px 0 0;padding:0;list-style:none;display:grid;gap:16px}
+.steps li{display:grid;grid-template-columns:2rem 1fr;gap:12px;align-items:start}
+.steps i{display:grid;place-items:center;width:2rem;height:2rem;border-radius:50%;background:var(--tint);color:var(--accent);font-style:normal;font-weight:800}
+.steps p{margin:3px 0 0}
+footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted)}
+a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+@media (max-width:480px){.stats{grid-template-columns:1fr 1fr}.stat:first-child{grid-column:1/-1;border-bottom:1px solid var(--line)}.stat:nth-child(2){padding-left:0;border-left:0}}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="bar"><div class="bar-in">
+  <div class="gauge">
+    <div class="batt" role="progressbar" aria-label="Progression de la cagnotte" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pb">
+      <div class="cells"><div class="inner"><div class="fill" id="fill"></div></div></div><i class="cap"></i>
+    </div>
+    <div class="pct" id="pct">0&nbsp;%</div>
+  </div>
+  <p class="hint" id="hint"></p>
+</div></div>
+
+<main>
+  <h1>Une trottinette électrique, avec votre aide.</h1>
+  <p class="lead">Cette cagnotte permet d’acheter une trottinette électrique. Chaque don, quel qu’en soit le montant, recharge un peu plus la jauge en haut de la page.</p>
+
+  <div class="stats">
+    <div class="stat"><b id="raised">0&nbsp;€</b><span>récoltés</span></div>
+    <div class="stat"><b id="goal"></b><span>objectif</span></div>
+    <div class="stat"><b id="left"></b><span>restants</span></div>
+  </div>
+  <div class="done" id="done">Objectif atteint. Merci à toutes et à tous.</div>
+
+  <section class="panel">
+    <h2>Faire un don</h2>
+    <div class="amounts" id="amounts"></div>
+    <label class="custom">Ou saisissez un autre montant
+      <span class="field"><input id="custom" type="number" inputmode="decimal" min="1" step="any" placeholder="15"><b>€</b></span>
+    </label>
+    <a class="give" id="give" href="#" target="_blank" rel="noopener">Faire un don</a>
+    <div class="msg" id="msg"></div>
+    <p class="note">Le paiement se fait sur GoFundMe, où vous confirmez le montant exact.</p>
+  </section>
+
+  <ol class="steps">
+    <li><i>1</i><p>Choisissez un montant ou saisissez le vôtre.</p></li>
+    <li><i>2</i><p>Payez en toute sécurité sur la page GoFundMe.</p></li>
+    <li><i>3</i><p>La batterie se recharge à mesure que la cagnotte avance.</p></li>
+  </ol>
+
+  <footer>Merci de partager cette page autour de vous.</footer>
+</main>
+
+<script>
+/* ====== À MODIFIER ====== */
+const CONFIG = {
+  paymentUrl: "https://gofund.me/1c4c52a03",  // lien de paiement
+  goal: 200,             // objectif en euros
+  raised: 0,             // montant récolté en euros (à mettre à jour à la main)
+  suggestions: [5, 10, 20, 50, 100, 200],
+  confettiAbove: 50      // confettis au-dessus de ce montant
+};
+/* ======================== */
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat("fr-FR", {maximumFractionDigits: 2}).format(n) + "\u00a0€";
+
+function render(){
+  const pct = Math.min(100, Math.round(CONFIG.raised / CONFIG.goal * 100));
+  $("pct").textContent = pct + "\u00a0%";
+  $("pb").setAttribute("aria-valuenow", pct);
+  $("hint").textContent = fmt(CONFIG.raised) + " sur " + fmt(CONFIG.goal);
+  $("goal").textContent = fmt(CONFIG.goal);
+  $("left").textContent = fmt(Math.max(0, CONFIG.goal - CONFIG.raised));
+  setTimeout(() => { $("fill").style.width = Math.max(pct, CONFIG.raised > 0 ? 3 : 0) + "%"; }, 250);
+  if(pct >= 100) $("done").style.display = "block";
+  const t0 = performance.now(), dur = 1600;
+  (function step(t){
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    $("raised").textContent = fmt(Math.round(CONFIG.raised * e * 100) / 100);
+    if(k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+/* Confettis */
+const cv = $("confetti"), cx = cv.getContext("2d");
+let parts = [], raf = null;
+function size(){ const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; cx.setTransform(d, 0, 0, d, 0, 0); }
+addEventListener("resize", size); size();
+const COLS = ["#2447f9", "#6c8bff", "#00b8d9", "#ffb400", "#12805c", "#e8edff"];
+function boom(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for(let i = 0; i < 160; i++){
+    parts.push({x: innerWidth * (.2 + Math.random() * .6), y: innerHeight * .6, vx: (Math.random() - .5) * 16, vy: -Math.random() * 17 - 5,
+      w: 6 + Math.random() * 6, h: 9 + Math.random() * 9, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: COLS[i % COLS.length]});
+  }
+  if(!raf) loop();
+}
+function loop(){
+  cx.clearRect(0, 0, innerWidth, innerHeight);
+  parts = parts.filter(p => p.y < innerHeight + 40);
+  for(const p of parts){
+    p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+  }
+  raf = parts.length ? requestAnimationFrame(loop) : null;
+  if(!parts.length) cx.clearRect(0, 0, innerWidth, innerHeight);
+}
+
+/* Choix du montant */
+let fired = false;
+function pick(v, btn){
+  [...$("amounts").children].forEach(c => c.classList.toggle("on", c === btn));
+  $("give").textContent = v > 0 ? "Donner " + fmt(v) : "Faire un don";
+  if(v > CONFIG.confettiAbove){
+    $("msg").textContent = "Quelle générosité, merci beaucoup\u00a0!";
+    if(!fired){ boom(); fired = true; }
+  } else { fired = false; $("msg").textContent = ""; }
+}
+CONFIG.suggestions.forEach(v => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = v + "\u00a0€";
+  b.onclick = () => { $("custom").value = ""; pick(v, b); };
+  $("amounts").appendChild(b);
+});
+$("custom").addEventListener("input", () => {
+  const v = parseFloat($("custom").value.replace(",", "."));
+  pick(v > 0 ? v : null, null);
+});
+$("give").addEventListener("click", e => {
+  if(!CONFIG.paymentUrl){ e.preventDefault(); $("msg").textContent = "Le lien de paiement sera bientôt ajouté."; return; }
+  $("give").href = CONFIG.paymentUrl;
+});
+render();
+</script>
+</body>
+</html>
